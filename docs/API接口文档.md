@@ -3,9 +3,18 @@
 ## 约定
 
 - 基础路径：`/api/v1`
-- 统一响应：`{ code, msg, data }`，`code=1` 成功、`code=0` 失败、`401` 未登录、`403` 无权限
+- 统一响应：`{ code, msg, data }`，`code=1` 成功、`code=0` 业务失败、`401` 未登录、`403` 无权限、`429` 触发限流（HTTP 200，见 `msg`）
 - 鉴权方式：请求头 `Authorization: Bearer <token>`
 - 在线文档：后端启动后访问 `http://localhost:8080/doc.html`
+
+### 列表查询通用规则
+
+> 前端 UI 为「逐字段独立控件」：文本业务字段用输入框模糊搜索，主键/外键/状态/类型/学年/学期等标识与枚举字段用下拉精确匹配（一律不手输数字 id）。
+
+- **文本业务字段**：`LIKE %关键字%` 模糊搜索（如姓名、学号/工号、电话、名称、原因、描述等）。
+- **主键 / 外键 / 枚举 / 数值标识**（`id`、`schoolId`、`majorId`、`clazzId`、`studentId`、`status`、`type`、`role`、`year`、`semester`、`full`、`joined` 等）：仅 `=` 精确匹配，**禁止模糊搜索**。
+- 全部参数均为**可选**：不传即不过滤；模糊参数传空串等同不传。
+- 分页参数：`page`（默认 1）、`size`（默认 10）。
 
 ## 一、认证接口
 
@@ -15,13 +24,18 @@
 | POST | `/auth/employee/login` | 员工登录 | 公开 |
 | POST | `/auth/employee/register` | 员工注册 | 公开 |
 | GET | `/auth/info` | 当前登录用户信息 | 需登录 |
+| GET | `/captcha` | 获取图形验证码（`data.captchaId` + Base64 图片） | 公开（IP 限流） |
 
 ### 学生登录
 
+先请求 `GET /captcha` 取得 `captchaId` 与图片，再登录：
+
 请求：
 ```json
-{ "username": "20220101", "password": "011234" }
+{ "username": "20220101", "password": "011234", "captchaId": "xxx", "captchaCode": "abcd" }
 ```
+
+> 验证码**一次性**：每次校验后即失效；登录失败后前端必须重新获取验证码。同一账号连续失败 5 次锁定 15 分钟（每次失败记录 10 分钟内有效）。验证码获取接口按 IP 限流（60 秒 30 次）。
 
 响应 `data`：
 ```json
@@ -46,7 +60,7 @@
 | POST | `/student/activities/{id}/join` | 报名活动 |
 | POST | `/student/activities` | 申请创建活动（学生会/社团） |
 
-活动列表查询参数：`page`、`size`、`type`(1-4)、`schoolId`、`name`、`status`(2举办中/6已结束)、`full`(1已满/2未满)、`joined`(1已参加/2未参加)、`minNum`、`maxNum`。
+活动列表查询参数：`name` **模糊**；`type`(1-4)、`schoolId`、`status`(2举办中/6已结束)、`full`(1已满/2未满)、`joined`(1已参加/2未参加)、`minNum`、`maxNum` 均为**精确**过滤。
 
 创建活动请求体：
 ```json
