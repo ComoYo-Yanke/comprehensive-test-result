@@ -1,0 +1,17 @@
+**/target/
+.idea
+*.iml
+*.class
+*Test.java
+**/test/
+.claude
+need.md
+datasource.config
+
+
+frontend/admin/node_modules
+frontend/user/node_modules
+frontend/admin/package-lock.json
+frontend/user/package-lock.json
+application-dev.yml
+application-prod.yml

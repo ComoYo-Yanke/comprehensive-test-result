@@ -1,0 +1,50 @@
+# =====================================================
+# 基础配置（所有环境共用，不含任何明文密码）
+# 数据库/Redis 连接信息使用 ${...} 占位符，
+# 实际值在各环境配置文件（application-dev.yml / application-prod.yml）中提供。
+# =====================================================
+spring:
+  application:
+    name: comprehensive-system
+  # 默认激活 dev 环境，可用 -Dspring.profiles.active=prod 覆盖
+  profiles:
+    active: dev
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${db.host}:${db.port}/${db.database}
+    username: ${db.username}
+    password: ${db.password}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+  data:
+    redis:
+      host: ${redis.host}
+      port: ${redis.port}
+      password: ${redis.password}
+      database: ${redis.database}
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+
+# MyBatis-Plus 通用配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+
+# 自定义业务配置
+zongce:
+  jwt:
+    # 签名密钥（生产环境请更换并通过环境变量注入）
+    secret: zongce-comprehensive-system-jwt-secret-key-2026
+    # token 有效期（毫秒），默认 24 小时
+    expire: 86400000
