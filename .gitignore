@@ -15,3 +15,4 @@ frontend/admin/package-lock.json
 frontend/user/package-lock.json
 application-dev.yml
 application-prod.yml
+uploads/*
